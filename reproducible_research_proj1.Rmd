@@ -1,0 +1,87 @@
+---
+title: "Reproducible Research Proj1"
+author: "A Rao"
+date: "6/26/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## read dataset
+
+```{r}
+activity <- read.csv("activity.csv")
+
+activity$date <- as.POSIXct(activity$date, "%Y-%m-%d")
+weekday <- weekdays(activity$date)
+activity <- cbind(activity,weekday)
+```
+
+## mean total no of steps taken per day
+
+```{r}
+activity_total_steps <- with(activity,aggregate(steps,by=list(date),
+                                           FUN=sum,
+                                           na.rm=TRUE))
+names(activity_total_steps) <- c("date","steps")
+png(filename = 'plot1.png')
+hist(activity_total_steps$steps,main = "Mean total no of steps taken per day",
+     xlab = "Total steps taken per day", col = "green", ylim = c(0,20),
+     breaks = seq(0,25000,by=2500))
+dev.off()
+```
+##average daily activity pattern
+```{r}
+average_daily_activity <- aggregate(activity$steps, 
+                                    by=list(activity$interval), 
+                                    FUN=mean, na.rm=TRUE)
+names(average_daily_activity) <- c("interval", "mean")
+png(filename = 'plot2.png')
+plot(average_daily_activity$interval, average_daily_activity$mean, 
+     type = "l", col="darkblue", lwd = 2,
+     xlab="Interval", ylab="Average number of steps",
+     main="Average number of steps per intervals")
+dev.off()
+```
+
+##Imputing missing values
+```{r}
+library(dplyr)
+sum(is.na(activity$steps))
+imputed_steps <- average_daily_activity$mean[match(activity$interval, 
+                                                   average_daily_activity$interval)]
+activity_imputed <- transform(activity, 
+                              steps = ifelse(is.na(activity$steps), 
+                                             yes = imputed_steps, 
+                                             no = activity$steps))
+total_steps_imputed <- aggregate(steps ~ date, activity_imputed, sum)
+names(total_steps_imputed) <- c("date", "daily_steps")
+
+png(filename = 'plot3.png')
+hist(total_steps_imputed$daily_steps, col = "darkblue", 
+     xlab = "Total steps per day", ylim = c(0,30), 
+     main = "Total number of steps taken each day", 
+     breaks = seq(0,25000,by=2500))
+dev.off()
+```
+
+##Are there differences in activity patterns between weekdays and weekends?
+```{r}
+activity$date <- as.Date(strptime(activity$date, format="%Y-%m-%d"))
+activity$datetype <- sapply(activity$date, function(x) {
+  if (weekdays(x) == "Sábado" | weekdays(x) =="Domingo") 
+  {y <- "Weekend"} else 
+  {y <- "Weekday"}
+  y
+})
+activity_by_date <- aggregate(steps~interval + datetype, 
+                              activity, mean, na.rm = TRUE)
+png(filename = 'plot4.png')
+plot<- ggplot2(activity_by_date, 
+              aes(x = interval , y = steps, color = datetype)) +
+  geom_line() +
+  labs(title = "Average daily steps by type of date", x = "Interval", y = "Average number of steps") +
+  facet_wrap(~datetype, ncol = 1, nrow=2)
+print(plot)
+dev.off()
+```
