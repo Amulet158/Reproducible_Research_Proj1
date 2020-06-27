@@ -150,4 +150,3 @@ Based on the above histograms, we find that **flood** and **hurricane/typhoon** 
 
 ### Conclusion  
 From these data, we found that **excessive heat** and **tornado** are most harmful with respect to population health, while **flood**, **drought**, and **hurricane/typhoon** have the greatest economic consequences.
-© 2020 GitHub, Inc.
